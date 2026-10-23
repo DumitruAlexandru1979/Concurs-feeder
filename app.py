@@ -6,7 +6,7 @@ st.set_page_config(page_title="Asistent Concurs Feeder", layout="centered")
 st.title("🏆 Concurs Feeder - Introducere Date")
 
 # Initializare baza de date locala in sesiune
-if 'cantariri' not in st_session_state:
+if 'cantariri' not in st.session_state:
     st.session_state['cantariri'] = []
 
 st.sidebar.header("📋 Panou Arbitru")
