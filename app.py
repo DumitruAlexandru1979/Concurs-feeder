@@ -1,11 +1,9 @@
 import streamlit as st
 import pandas as pd
 
-# Titlu aplicatie
 st.set_page_config(page_title="Asistent Concurs Feeder", layout="centered")
-st.title("🏆 Concurs Feeder - Introducere Date")
+st.title("🏆 Asistent Concurs Method Feeder")
 
-# Initializare baza de date locala in sesiune
 if 'cantariri' not in st.session_state:
     st.session_state['cantariri'] = []
 
@@ -16,33 +14,34 @@ sector = st.sidebar.selectbox("Sector", ["Sector A", "Sector B", "Sector C", "Se
 st.header(f"Cântărire - {sector}")
 
 with st.form("form_cantarire", clear_on_submit=True):
-    stand = st.number_input("Număr Stand / Pescar", min_value=1, max_value=100, step=1)
-    nume_pescar = st.text_input("Nume Pescar")
-    greutate = st.number_input("Greutate (grame)", min_value=0, step=50)
-    peste_mare = st.number_input("Cel mai mare pește (grame - opțional)", min_value=0, step=50)
+    echipa = st.text_input("Nume Echipă / Club")
+    pescar = st.text_input("Nume Pescar")
+    stand = st.number_input("Număr Stand", min_value=1, max_value=100, step=1)
+    greutate = st.number_input("Greutate Totală (grame)", min_value=0, step=10)
+    captura_mare = st.number_input("Cea mai mare captură (grame)", min_value=0, step=10)
     
-    salveaza = st.form_submit_button("💾 Salvează Cântărirea")
+    salveaza = st.form_submit_button("💾 Salvează Datele")
 
 if salveaza:
-    if nume_pescar.strip() != "":
+    if pescar.strip() != "":
         st.session_state['cantariri'].append({
             "Arbitru": arbitru,
             "Sector": sector,
             "Stand": stand,
-            "Pescar": nume_pescar,
+            "Echipă": echipa,
+            "Pescar": pescar,
             "Greutate (g)": greutate,
-            "Pește Mare (g)": peste_mare
+            "Captură Mare (g)": captura_mare
         })
-        st.success(f"Cântărire salvată pentru {nume_pescar} (Stand {stand})!")
+        st.success(f"Date salvate cu succes pentru {pescar} ({echipa})!")
     else:
         st.error("Te rugăm să introduci numele pescarului!")
 
-# Afisare Clasament / Date introduse
 st.write("---")
-st.subheader("📊 Date Introduse")
+st.subheader("📊 Registru Cântăriri")
 
 if st.session_state['cantariri']:
     df = pd.DataFrame(st.session_state['cantariri'])
     st.dataframe(df, use_container_width=True)
 else:
-    st.info("Nu a fost introdusă nicio cântărire încă.")
+    st.info("Nu a fost înregistrată nicio cântărire până acum.")
