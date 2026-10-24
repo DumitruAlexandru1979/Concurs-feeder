@@ -5,7 +5,7 @@ st.set_page_config(page_title="Concurs Feeder Live", page_icon="🏆", layout="c
 
 st.title("🏆 Concurs Method Feeder")
 
-# Inițializare bază de date în memorie/sesiune
+# Inițializare bază de date în memorie
 if "weigh_data" not in st.session_state:
     st.session_state.weigh_data = []
 
@@ -45,7 +45,7 @@ with tab1:
                 })
                 st.success(f"✅ Cântărire salvată pentru {angler} ({weight} kg)!")
 
-# Convertim datele în DataFrame dacă există
+# Convertim datele în DataFrame
 df = pd.DataFrame(st.session_state.weigh_data)
 
 # TAB 2: CLASAMENT INDIVIDUAL
@@ -83,8 +83,20 @@ with tab3:
     else:
         st.info("Nu există date pentru clasamentul pe echipe.")
 
-# OPTIUNE RESETARE CONCURS JOS
+# OPTIUNI SALVARE SI RESETARE CONCURS JOS
 st.divider()
-if st.button("🗑️ Resetare Concurs (Șterge Datele)", type="secondary"):
+
+if not df.empty:
+    # Opțiune descărcare date
+    csv_data = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label="📥 Descarcă Istoric Concurs (CSV / Excel)",
+        data=csv_data,
+        file_name="rezultate_concurs.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
+
+if st.button("🗑️ Resetare Concurs (Șterge Datele)", type="secondary", use_container_width=True):
     st.session_state.weigh_data = []
     st.rerun()
