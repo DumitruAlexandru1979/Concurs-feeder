@@ -17,9 +17,9 @@ with col2:
     if st.button("🔄 Actualizează", use_container_width=True):
         st.rerun()
 
-# Link-uri Google Form si Google Sheets direct catre Clasament General
+# Link-uri Google Form si Google Sheets direct catre Clasament General (gid=269019846)
 form_url = "https://docs.google.com/forms/d/e/1FAIpQLSf67fr3GOWoGQ5-XDkKc924_nhzGZU4dg3bMQivtU5L8HNNng/viewform?embedded=true"
-sheet_clasament_url = "https://docs.google.com/spreadsheets/d/1tnW1gonKtUY0RYD6H4wfVPitz46wDOzzbOlkNHvW0S4/htmlview?gid=1874291500"
+sheet_clasament_url = "https://docs.google.com/spreadsheets/d/1tnW1gonKtUY0RYD6H4wfVPitz46wDOzzbOlkNHvW0S4/htmlview?gid=269019846"
 
 tab1, tab2, tab3 = st.tabs(["📝 Adaugă Cântărire", "👤 Clasament Individual", "👥 Clasament Echipe"])
 
