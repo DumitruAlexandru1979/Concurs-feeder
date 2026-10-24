@@ -1,11 +1,12 @@
 import streamlit as st
 import pandas as pd
+from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(page_title="Asistent Concurs Feeder", layout="centered")
 st.title("🏆 Asistent Concurs Method Feeder")
 
-if 'cantariri' not in st.session_state:
-    st.session_state['cantariri'] = []
+# Conexiune la Google Sheets
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 st.sidebar.header("📋 Panou Arbitru")
 arbitru = st.sidebar.text_input("Nume Arbitru", "Arbitru 1")
@@ -24,7 +25,14 @@ with st.form("form_cantarire", clear_on_submit=True):
 
 if salveaza:
     if pescar.strip() != "":
-        st.session_state['cantariri'].append({
+        try:
+            # Citim datele existente din Google Sheets
+            existing_data = conn.read(ttl=0)
+            existing_data = existing_data.dropna(how="all")
+        except Exception:
+            existing_data = pd.DataFrame()
+
+        new_entry = pd.DataFrame([{
             "Arbitru": arbitru,
             "Sector": sector,
             "Stand": stand,
@@ -32,16 +40,25 @@ if salveaza:
             "Pescar": pescar,
             "Greutate (g)": greutate,
             "Captură Mare (g)": captura_mare
-        })
-        st.success(f"Date salvate cu succes pentru {pescar} ({echipa})!")
+        }])
+
+        updated_df = pd.concat([existing_data, new_entry], ignore_index=True)
+        
+        # Salvam inapoi in Google Sheets
+        conn.update(data=updated_df)
+        st.success(f"Date salvate cu succes în Google Sheets pentru {pescar} ({echipa})!")
+        st.cache_data.clear()
     else:
         st.error("Te rugăm să introduci numele pescarului!")
 
 st.write("---")
-st.subheader("📊 Registru Cântăriri")
+st.subheader("📊 Registru Cântăriri (Live din Google Sheets)")
 
-if st.session_state['cantariri']:
-    df = pd.DataFrame(st.session_state['cantariri'])
-    st.dataframe(df, use_container_width=True)
-else:
-    st.info("Nu a fost înregistrată nicio cântărire până acum.")
+try:
+    df_live = conn.read(ttl=0).dropna(how="all")
+    if not df_live.empty:
+        st.dataframe(df_live, use_container_width=True)
+    else:
+        st.info("Nu a fost înregistrată nicio cântărire până acum.")
+except Exception:
+    st.info("Tabelul este gol sau se încarcă datele...")
