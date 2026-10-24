@@ -5,8 +5,17 @@ from streamlit_gsheets import GSheetsConnection
 st.set_page_config(page_title="Asistent Concurs Feeder", layout="centered")
 st.title("🏆 Asistent Concurs Method Feeder")
 
-# Conexiune la Google Sheets
+# Conectare la Google Sheets
 conn = st.connection("gsheets", type=GSheetsConnection)
+
+try:
+    data = conn.read()
+    if data is not None:
+        data = data.dropna(how="all")
+    else:
+        data = pd.DataFrame(columns=["Arbitru", "Sector", "Stand", "Echipă", "Pescar", "Greutate (g)", "Captură Mare (g)"])
+except Exception:
+    data = pd.DataFrame(columns=["Arbitru", "Sector", "Stand", "Echipă", "Pescar", "Greutate (g)", "Captură Mare (g)"])
 
 st.sidebar.header("📋 Panou Arbitru")
 arbitru = st.sidebar.text_input("Nume Arbitru", "Arbitru 1")
@@ -25,40 +34,28 @@ with st.form("form_cantarire", clear_on_submit=True):
 
 if salveaza:
     if pescar.strip() != "":
-        try:
-            # Citim datele existente din Google Sheets
-            existing_data = conn.read(ttl=0)
-            existing_data = existing_data.dropna(how="all")
-        except Exception:
-            existing_data = pd.DataFrame()
-
-        new_entry = pd.DataFrame([{
+        noua_cantarire = pd.DataFrame([{
             "Arbitru": arbitru,
             "Sector": sector,
-            "Stand": stand,
+            "Stand": int(stand),
             "Echipă": echipa,
             "Pescar": pescar,
-            "Greutate (g)": greutate,
-            "Captură Mare (g)": captura_mare
+            "Greutate (g)": int(greutate),
+            "Captură Mare (g)": int(captura_mare)
         }])
-
-        updated_df = pd.concat([existing_data, new_entry], ignore_index=True)
         
-        # Salvam inapoi in Google Sheets
-        conn.update(data=updated_df)
-        st.success(f"Date salvate cu succes în Google Sheets pentru {pescar} ({echipa})!")
-        st.cache_data.clear()
+        date_actualizate = pd.concat([data, noua_cantarire], ignore_index=True)
+        conn.update(data=date_actualizate)
+        
+        st.success(f"Date salvate cu succes pentru {pescar} ({echipa})!")
+        st.rerun()
     else:
         st.error("Te rugăm să introduci numele pescarului!")
 
 st.write("---")
-st.subheader("📊 Registru Cântăriri (Live din Google Sheets)")
+st.subheader("📊 Registru Cântăriri (Sincronizat Live)")
 
-try:
-    df_live = conn.read(ttl=0).dropna(how="all")
-    if not df_live.empty:
-        st.dataframe(df_live, use_container_width=True)
-    else:
-        st.info("Nu a fost înregistrată nicio cântărire până acum.")
-except Exception:
-    st.info("Tabelul este gol sau se încarcă datele...")
+if not data.empty:
+    st.dataframe(data, use_container_width=True)
+else:
+    st.info("Nu a fost înregistrată nicio cântărire până acum.")
