@@ -3,9 +3,9 @@ import streamlit as st
 st.set_page_config(page_title="Asistent Concurs Feeder", layout="centered")
 st.title("🏆 Asistent Concurs Method Feeder")
 
-# Link-uri Google Form si Google Sheet
+# Link-uri Google Form si Google Sheet (specificat pe tab-ul cu raspunsuri)
 form_url = "https://docs.google.com/forms/d/e/1FAIpQLSf67fr3GOWoGQ5-XDkKc924_nhzGZU4dg3bMQivtU5L8HNNng/viewform?embedded=true"
-sheet_url = "https://docs.google.com/spreadsheets/d/1tnW1gonKtUY0RYD6H4wfVPitz46wDOzzbOlkNHvW0S4/preview"
+sheet_url = "https://docs.google.com/spreadsheets/d/1tnW1gonKtUY0RYD6H4wfVPitz46wDOzzbOlkNHvW0S4/htmlview?gid=2000651327"
 
 tab1, tab2 = st.tabs(["📝 Introducere Cântărire", "📊 Tabel Live (Google Sheets)"])
 
