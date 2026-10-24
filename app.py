@@ -1,27 +1,23 @@
 import streamlit as st
 import pandas as pd
-import gspread
+from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(page_title="Asistent Concurs Feeder", layout="centered")
 st.title("🏆 Asistent Concurs Method Feeder")
 
-# Conectare nativa la Google Sheets
-try:
-    gc = gspread.public_spreadsheet(st.secrets["gsheets"]["spreadsheet"])
-    sheet = gc.sheet1
-except Exception as e:
-    st.error("Eroare la conectarea cu Google Sheets. Verifică Secrets!")
-    sheet = None
+# Conectare la Google Sheets
+conn = st.connection("gsheets", type=GSheetsConnection)
 
-# Citire date din Google Sheet
-if sheet:
+def incarca_date():
     try:
-        raw_data = sheet.get_all_records()
-        data = pd.DataFrame(raw_data)
+        df = conn.read(ttl="0")
+        if df is not None and not df.empty:
+            return df.dropna(how="all")
     except Exception:
-        data = pd.DataFrame(columns=["Arbitru", "Sector", "Stand", "Echipă", "Pescar", "Greutate (g)", "Captură Mare (g)"])
-else:
-    data = pd.DataFrame(columns=["Arbitru", "Sector", "Stand", "Echipă", "Pescar", "Greutate (g)", "Captură Mare (g)"])
+        pass
+    return pd.DataFrame(columns=["Arbitru", "Sector", "Stand", "Echipă", "Pescar", "Greutate (g)", "Captură Mare (g)"])
+
+data = incarca_date()
 
 st.sidebar.header("📋 Panou Arbitru")
 arbitru = st.sidebar.text_input("Nume Arbitru", "Arbitru 1")
@@ -40,13 +36,21 @@ with st.form("form_cantarire", clear_on_submit=True):
 
 if salveaza:
     if pescar.strip() != "":
-        if sheet:
-            rand_nou = [arbitru, sector, int(stand), echipa, pescar, int(greutate), int(captura_mare)]
-            sheet.append_row(rand_nou)
-            st.success(f"Date salvate cu succes pentru {pescar} ({echipa})!")
-            st.rerun()
-        else:
-            st.error("Nu există conexiune la Google Sheets!")
+        noua_cantarire = pd.DataFrame([{
+            "Arbitru": arbitru,
+            "Sector": sector,
+            "Stand": int(stand),
+            "Echipă": echipa,
+            "Pescar": pescar,
+            "Greutate (g)": int(greutate),
+            "Captură Mare (g)": int(captura_mare)
+        }])
+        
+        date_actualizate = pd.concat([data, noua_cantarire], ignore_index=True)
+        conn.update(data=date_actualizate)
+        
+        st.success(f"Date salvate cu succes pentru {pescar} ({echipa})!")
+        st.rerun()
     else:
         st.error("Te rugăm să introduci numele pescarului!")
 
