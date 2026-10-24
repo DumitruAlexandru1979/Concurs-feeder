@@ -1,19 +1,20 @@
 import streamlit as st
 import pandas as pd
-import gspread
+from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(page_title="Asistent Concurs Feeder", layout="centered")
 st.title("🏆 Asistent Concurs Method Feeder")
 
-# Conectare nativa la Google Sheets folosind URL-ul din Secrets
-@st.cache_resource
-def get_gsheet_client():
-    return gspread.public_spreadsheet(st.secrets["gsheets"]["spreadsheet"])
+# Conectare securizata la Google Sheets
+conn = st.connection("gsheets", type=GSheetsConnection)
 
+# Citire date din Google Sheet
 try:
-    sheet = get_gsheet_client().sheet1
-    raw_data = sheet.get_all_records()
-    data = pd.DataFrame(raw_data)
+    data = conn.read(ttl=0)
+    if data is not None:
+        data = data.dropna(how="all")
+    else:
+        data = pd.DataFrame(columns=["Arbitru", "Sector", "Stand", "Echipă", "Pescar", "Greutate (g)", "Captură Mare (g)"])
 except Exception:
     data = pd.DataFrame(columns=["Arbitru", "Sector", "Stand", "Echipă", "Pescar", "Greutate (g)", "Captură Mare (g)"])
 
@@ -34,9 +35,19 @@ with st.form("form_cantarire", clear_on_submit=True):
 
 if salveaza:
     if pescar.strip() != "":
-        # Adaugare rand direct in Google Sheet
-        rand_nou = [arbitru, sector, int(stand), echipa, pescar, int(greutate), int(captura_mare)]
-        sheet.append_row(rand_nou)
+        noua_cantarire = pd.DataFrame([{
+            "Arbitru": arbitru,
+            "Sector": sector,
+            "Stand": int(stand),
+            "Echipă": echipa,
+            "Pescar": pescar,
+            "Greutate (g)": int(greutate),
+            "Captură Mare (g)": int(captura_mare)
+        }])
+        
+        # Combinare cu datele existente și scriere în Google Sheets
+        date_actualizate = pd.concat([data, noua_cantarire], ignore_index=True)
+        conn.update(data=date_actualizate)
         
         st.success(f"Date salvate cu succes pentru {pescar} ({echipa})!")
         st.rerun()
