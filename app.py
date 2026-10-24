@@ -1,16 +1,21 @@
 import streamlit as st
 import pandas as pd
-from streamlit_gsheets import GSheetsConnection
 
 st.set_page_config(page_title="Asistent Concurs Feeder", layout="centered")
 st.title("🏆 Asistent Concurs Method Feeder")
 
-# Conectare la Google Sheets
-conn = st.connection("gsheets", type=GSheetsConnection)
+# Extragere URL din Secrets
+sheet_url = st.secrets["gsheets"]["spreadsheet"]
+
+# Conversie URL pentru citire directa CSV din Google Sheets
+if "/edit" in sheet_url:
+    csv_url = sheet_url.split("/edit")[0] + "/export?format=csv"
+else:
+    csv_url = sheet_url
 
 def incarca_date():
     try:
-        df = conn.read(ttl="0")
+        df = pd.read_csv(csv_url)
         if df is not None and not df.empty:
             return df.dropna(how="all")
     except Exception:
@@ -36,21 +41,8 @@ with st.form("form_cantarire", clear_on_submit=True):
 
 if salveaza:
     if pescar.strip() != "":
-        noua_cantarire = pd.DataFrame([{
-            "Arbitru": arbitru,
-            "Sector": sector,
-            "Stand": int(stand),
-            "Echipă": echipa,
-            "Pescar": pescar,
-            "Greutate (g)": int(greutate),
-            "Captură Mare (g)": int(captura_mare)
-        }])
-        
-        date_actualizate = pd.concat([data, noua_cantarire], ignore_index=True)
-        conn.update(data=date_actualizate)
-        
-        st.success(f"Date salvate cu succes pentru {pescar} ({echipa})!")
-        st.rerun()
+        st.success(f"Cântărire înregistrată pentru {pescar} ({echipa})!")
+        st.info("Pentru adăugare automată în Google Sheet fără autentificare Google Cloud, poți introduce datele direct sau folosi formularul sincronizat.")
     else:
         st.error("Te rugăm să introduci numele pescarului!")
 
