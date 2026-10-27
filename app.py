@@ -9,7 +9,13 @@ st.title("🏆 Concurs Method Feeder")
 if "weigh_data" not in st.session_state:
     st.session_state.weigh_data = []
 
-tab1, tab2, tab3 = st.tabs(["➕ Adaugă Cântărire", "👤 Clasament Individual", "👥 Clasament Echipe"])
+# Adăugat Tab-ul 4: Modifică / Șterge
+tab1, tab2, tab3, tab4 = st.tabs([
+    "➕ Adaugă Cântărire", 
+    "👤 Clasament Individual", 
+    "👥 Clasament Echipe",
+    "✏️ Modifică / Șterge"
+])
 
 # TAB 1: FORMULAR INTRODUCERE
 with tab1:
@@ -44,6 +50,7 @@ with tab1:
                     "CMMC": cmmc
                 })
                 st.success(f"✅ Cântărire salvată pentru {angler} ({weight} kg)!")
+                st.rerun()
 
 # Convertim datele în DataFrame
 df = pd.DataFrame(st.session_state.weigh_data)
@@ -83,11 +90,32 @@ with tab3:
     else:
         st.info("Nu există date pentru clasamentul pe echipe.")
 
-# OPTIUNI SALVARE SI RESETARE CONCURS JOS
+# TAB 4: MODIFICĂ SAU ȘTERGE DATE GREȘITE
+with tab4:
+    st.subheader("✏️ Editare Cântăriri Înregistrate")
+    if not df.empty:
+        st.caption("Modifică valorile direct în tabel sau selectează rânduri și apasă 'Delete' pe tastatură pentru a le șterge.")
+        
+        # Tabelul interactiv de editare
+        edited_df = st.data_editor(
+            df, 
+            num_rows="dynamic", 
+            use_container_width=True,
+            key="editor_cantariri"
+        )
+        
+        # Buton pentru salvarea modificărilor în memorie
+        if st.button("💾 Salvează Modificările Corectate", type="primary", use_container_width=True):
+            st.session_state.weigh_data = edited_df.to_dict(orient="records")
+            st.success("✅ Datele au fost actualizate cu succes!")
+            st.rerun()
+    else:
+        st.info("Nu există cântăriri de modificat.")
+
+# OPȚIUNI SALVARE ȘI RESETARE CONCURS JOS
 st.divider()
 
 if not df.empty:
-    # Opțiune descărcare date
     csv_data = df.to_csv(index=False).encode('utf-8')
     st.download_button(
         label="📥 Descarcă Istoric Concurs (CSV / Excel)",
